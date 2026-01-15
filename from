@@ -1,0 +1,28 @@
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime
+
+with DAG(
+    "leadpulse_delta_cdf_pipeline",
+    start_date=datetime(2026,1,15),
+    schedule_interval="@daily",
+    catchup=False
+) as dag:
+
+    bronze = BashOperator(
+        task_id="bronze",
+        bash_command="spark-submit /app/scripts/generate_bronze_delta_cdf.py"
+    )
+
+    silver = BashOperator(
+        task_id="silver",
+        bash_command="spark-submit /app/scripts/generate_silver_delta_cdf.py"
+    )
+
+    gold = BashOperator(
+        task_id="gold",
+        bash_command="spark-submit /app/scripts/generate_gold_delta_cdf.py"
+    )
+
+    bronze >> silver >> gold
+
